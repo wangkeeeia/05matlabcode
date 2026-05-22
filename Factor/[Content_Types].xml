@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+  <Default ContentType="text/css" Extension="css"/>
+  <Default ContentType="unknown/ext" Extension="cur"/>
+  <Default ContentType="unknown/ext" Extension="gif"/>
+  <Default ContentType="application/vnd.mathworks.mlreportgen.dom.htmx.document.main+xml" Extension="html"/>
+  <Default ContentType="unknown/ext" Extension="js"/>
+  <Default ContentType="unknown/ext" Extension="json"/>
+  <Default ContentType="unknown/ext" Extension="png"/>
+  <Default ContentType="application/vnd.openxmlformats-package.relationships+xml" Extension="rels"/>
+  <Default ContentType="unknown/ext" Extension="rights"/>
+  <Default ContentType="unknown/ext" Extension="svg"/>
+  <Override ContentType="unknown/ext" PartName="/support/lib/main-css.css"/>
+  <Override ContentType="unknown/ext" PartName="/support/slwebview_files/icon.css"/>
+</Types>

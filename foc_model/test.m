@@ -1,0 +1,89 @@
+clear; clc; close all;
+
+%% ==================== 1. 创建更大的 3D 表格 ====================
+% 定义断点（你可以根据自己真实模型修改范围）
+X_index = linspace(-8.5, 12.3, 25);    
+Y_index = linspace(-45.7, 67.2, 25);   
+Z_index = linspace(-3.8, 4.1, 25);      
+% 生成 25x25x25 的表格数据（模拟真实非线性关系）
+[Xg, Yg, Zg] = ndgrid(X_index, Y_index, Z_index);
+
+A = 0.6*Xg.^2 - 0.4*Yg + 1.8*sin(2*Zg) + 0.15*Xg.*Yg.*sin(Zg) - 2.5;
+
+A1 = A(:);   % 展平为 1D
+
+X_min = min(X_index);
+Y_min = min(Y_index);
+Z_min = min(Z_index);
+X_step = X_index(2) - X_index(1);
+Y_step = Y_index(2) - Y_index(1);
+Z_step = Z_index(2) - Z_index(1);
+
+X_dim = length(X_index);
+Y_dim = length(Y_index);
+Z_dim = length(Z_index);
+XY_dim = X_dim * Y_dim;
+
+%% ==================== 2. 生成测试点 ====================
+num_test = 10000;
+rng(0);
+
+test_id    = X_min - 3 + (max(X_index)-X_min + 6)*rand(num_test,1);
+test_iq    = Y_min - 4 + (max(Y_index)-Y_min + 8)*rand(num_test,1);
+test_theta = Z_min - 3 + (max(Z_index)-Z_min + 6)*rand(num_test,1);
+
+%% ==================== 3. 原生 3D 基准（使用 griddedInterpolant） ====================
+% 这个函数更常用，也更不容易出权限问题
+F = griddedInterpolant({X_index, Y_index, Z_index}, A, 'linear', 'nearest');
+
+original = F(test_id, test_iq, test_theta);
+
+%% ==================== 4. 你的自定义 1D 绿色块逻辑 ====================
+custom = zeros(num_test, 1);
+
+for i = 1:num_test
+    x = test_id(i);
+    y = test_iq(i);
+    z = test_theta(i);
+    
+    nx = max(0, min(X_dim-1, floor( (x - X_min)/X_step )));
+    ny = max(0, min(Y_dim-1, floor( (y - Y_min)/Y_step )));
+    nz = max(0, min(Z_dim-1, floor( (z - Z_min)/Z_step )));
+    
+    index = nz * XY_dim + ny * X_dim + nx + 1;
+    
+    custom(i) = A1(index);
+end
+
+%% ==================== 5. 结果统计 ====================
+error = original - custom;
+
+fprintf('=== 精度测试结果 ===\n');
+fprintf('测试点数量：%d\n', num_test);
+fprintf('最大绝对误差：%.6f\n', max(abs(error)));
+fprintf('平均绝对误差：%.6f\n', mean(abs(error)));
+fprintf('RMS 误差：%.6f\n', sqrt(mean(error.^2)));
+fprintf('误差 > 0.5 的点占比：%.2f%%\n', 100*sum(abs(error)>0.5)/num_test);
+
+%% ==================== 6. 绘图 ====================
+figure('Position',[100 100 1200 700]);
+
+subplot(3,1,1);
+plot(1:num_test, original, 'b.', 'MarkerSize',1); hold on;
+plot(1:num_test, custom,   'r.', 'MarkerSize',1);
+legend('原生 3D (griddedInterpolant)', '自定义 1D (绿色块)');
+title('输出值对比');
+grid on;
+
+subplot(3,1,2);
+plot(1:num_test, error, 'g.', 'MarkerSize',1);
+title('误差曲线');
+grid on;
+
+subplot(3,1,3);
+histogram(error, 60);
+title('误差分布');
+grid on;
+
+save('Lookup_Test_Result_v4.mat', 'original','custom','error');
+fprintf('\n测试完成！结果已保存\n');
